@@ -7,8 +7,13 @@ in the latest maintained version on your machine;
 No warranty, implied or not, is given in any way.
 
 # Getting Started
+
+> [!CAUTION]
+> It's advised to install this script only on fresh machines, backup all files before proceeding.
+> No warranties of any kind, implied or expressed are given.
+
 ```
-sudo apt update 
+sudo apt update -y && sudo apt full-upgrade -y && sudo apt autoremove -y && sudo apt clean -y && sudo apt autoclean -y
 sudo apt install git # The installation will be skipped if git is already present on the system
 git clone https://github.com/gms-electronics/solidusinstall/
 chmod +x ~/solidusinstall/installation/ubuntusolidusinstall.sh
