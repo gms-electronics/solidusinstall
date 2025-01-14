@@ -64,7 +64,6 @@ All packages listed below are installed in the current stable release version. P
 | libvips         | A fast image processing library with low memory needs.                                                     |
 | nodejs          | Node.js® is a JavaScript runtime built on Chrome's V8 engine.                                              |
 | yarn            | A javascript package manager.                                                                              |
-| redis (optional)| A memory stored DB to provide caching.                                                                     |
 
 ## Other Packages (Optional)
 | Application     | Description                                                                                                |
