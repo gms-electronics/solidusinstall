@@ -20,6 +20,20 @@ chmod +x ~/solidusinstall/installation/ubuntusolidusinstall.sh
 ~/solidusinstall/installation/ubuntusolidusinstall.sh
 ```
 
+# Supported Configuration
+Ubuntu 24.04
+Solidus 4.4.2
+Ruby 3.3.6
+Ruby on Rails 7.2.2.1
+
+# Features 
+Following configurations are made by the script:
+* Install Ruby on Rails and dependencies
+* Install Solidus
+* Install the DB (currently this script supports SQLite3)
+* Install nginx and configure as reverse proxy (optional)
+* Configure certificates with Cloudflare DNS and Let's Encrypt (optional)
+
 # Supported Environment
 A fresh Ubuntu Installation.
 
@@ -28,18 +42,6 @@ A fresh Ubuntu Installation.
 * You need a Cloudflare API Token;
 * While this script might work with preexisting Rails Apps on the server, I do not recommend it. 
 
-# Current Configuration
-Solidus 4.4.2
-Ruby 3.3.6
-Ruby on Rails 7.2.2.1
-
-## Features 
-Following configurations are made by the script:
-* Install Ruby on Rails and dependencies
-* Install Solidus
-* Install the DB (currently this script supports SQLite3)
-* Install nginx and configure as reverse proxy (optional)
-* Configure certificates with Cloudflare DNS and Let's Encrypt (optional)
 
 # Packages Installed
 All packages listed below are installed in the current stable release version. Packages that are present will not be reinstalled.
