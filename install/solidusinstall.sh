@@ -1,6 +1,6 @@
 #!/bin/bash
 # Simple Solid Store Install Script 
-# © Fabian V. Thobe for GMS 2025
+# © Fabian V. Thobe for GMS 2025 If no license specified in parent repository, all rights reserved.
 # Script Configuration
 ## Variables
 solidusv=4.4.2
@@ -12,7 +12,7 @@ ubuntuv=24.04
 cat <<EOF 
 ----------------------------------------------------------------------------------
 © 2025 Fabian Vincent Thobe for GMS
-If not specified in parent repository, all rights reserved.
+If no license specified in parent repository, all rights reserved.
 ----------------------------------------------------------------------------------
 
    █████                                                       
@@ -31,6 +31,9 @@ This script installs Solidus including Ruby and Ruby on Rails
 in the latest maintained version on your machine.
 No warranty, implied or not, is given in any way.
 
+Any steps that are optional have an individual prompt asking
+for your confirmation before proceeding. 
+
 Features: 
 
 * Install Ruby on Rails and dependencies
@@ -38,6 +41,12 @@ Features:
 * Install the DB (currently this script supports SQLite3)
 * Install nginx and configure as reverse proxy (optional)
 * Configure certificates with Cloudflare DNS and Let's Encrypt (optional)
+* Setup Firewall allowing only traffic from ports 22, 443 and 3000 (optional)
+
+Roadmap for future versions: 
+
+* Full Redis configuration
+* Best Practice Settings for Developer / Staging / Production 
 
 ----------------------------------------------------------------------------------
 Information         You might be asked for your password during this procedure.
@@ -51,13 +60,14 @@ read -n 1 -s -r -p "Press CTRL + C to cancel the installation or any other key t
 # Get a clean slate by updating Ubuntu (apt update & sudo apt upgrade)
 echo "Please enter your password to upgrade Ubuntu. During this process we will update all packages on Ubuntu."
 sudo apt update -y && sudo apt full-upgrade -y && sudo apt autoremove -y && sudo apt clean -y && sudo apt autoclean -y
-echo "Your system is ready to proceed with the installation."
+echo "Your system is up to date and ready to proceed with the installation."
 
 # Install Dependencies
+# [WIP] Convert text block to array
 cat <<EOF
 ----------------------------------------------------------------------------------
 
-Step 1: Install Solidus and Dependencies
+Step 1: Install Solidus and Dependencies (sudo might be required for some steps)
 
 ----------------------------------------------------------------------------------
 
@@ -85,7 +95,7 @@ This script assumes a very basic installation containing following packages:
 * redis (optional)  A memory stored DB to provide caching.
 
 ----------------------------------------------------------------------------------
-INFO        You might be asked for your password during this procedure.
+INFO                You might be asked for your password during this procedure.
 ----------------------------------------------------------------------------------
 EOF
 
@@ -96,8 +106,11 @@ read -n 1 -s -r -p "Press CTRL + C to cancel the installation or any other key t
 sudo apt install git curl libssl-dev libreadline-dev zlib1g-dev autoconf bison build-essential libyaml-dev libncurses-dev libffi-dev libgdbm-dev libvips nodejs yarn -y
 
 # Redis Installation
+# [WIP] Unify all Yes / No questions in single paradigm
 while true; do
-read -p "Do you want to install Redis (recommended for Production)? (y/n)" yn
+read -p "Do you want to install Redis (recommended for Production)?" yn
+echo -e "Answer with \"y/n\"."
+echo    # (optional) move to a new line
 case $yn in 
 	[yY] ) sudo apt install redis -y;
 		break;;
@@ -121,8 +134,10 @@ rbenv install $rubyv
 rbenv global $rubyv
 
 # Skips local documentation of gem installs
+# [WIP] Unify all Yes / No questions in single paradigm
 while true; do
 read -p "Do you want skip local documentation of gem installs (recommended for development)? (y/n)" yn
+echo -e "Answer with \"y/n\"."
 echo    # (optional) move to a new line
 case $yn in 
 	[yY] ) echo "gem: --no-document" > ~/.gemrc;
@@ -169,6 +184,8 @@ Step 2: Solidus Reverse Proxy Configuration with SSL using nginx and certbot
 
 You have now the possibility to install and configure a reverse proxy.
 Your password might be required for this procedure. 
+If pre-existing certificates or configurations are found, 
+this script will try to reuse them. 
 
 Requirements for SSL (optional):
 * The domain must use the Cloudflare DNS Servers,
@@ -195,10 +212,11 @@ EOF
 sudo apt install nginx -y
 
 # Install SSL Requierements
-sudo apt install certbot python3-certbot-dns-cloudflare -y
+sudo apt install certbot python3 python3-certbot-dns-cloudflare -y
 
 # Configuring SSL with Certbot
 read -p "Do you want to configure SSL certificates now?" -n 1 -r
+echo -e "Answer with \"y/n\"."
 echo    # (optional) move to a new line
 if [[ $REPLY =~ ^[Yy]$ ]]
 then
@@ -208,8 +226,7 @@ then
         read -n 1 -s -r -p "Press any key to continue."
         sudo certbot certonly --dns-cloudflare --dns-cloudflare-credentials ~/.secrets/certbot/cloudflare.ini --dns-cloudflare-propagation-seconds 60 -d $hostname
     else
-        echo -e "Cloudflare is not yet configured to be used for Certbot, \nPlease enter your API token to configure following FQDN:"
-        echo $hostname
+        echo -e "Cloudflare is not yet configured to be used for Certbot, \nPlease enter your Cloudflare API token to configure following FQDN: $hostname"
         read cloudflaretoken
         echo "We are now creating your file with the API token, you will find it in the following file: ~/.secrets/certbot/cloudflare.ini."
         mkdir -p ~/.secrets/certbot/
@@ -219,7 +236,67 @@ then
     fi
 fi
 
-# Copy over the nginx configuration and transfer the settings
-
+# [WIP]Copy over the nginx configuration and transfer the settings
 
 echo "Step 2 is completed."
+
+# Firewall Configuration
+
+cat <<EOF 
+----------------------------------------------------------------------------------
+
+Step 3: Firewall Configuration (optional)
+
+----------------------------------------------------------------------------------
+
+ ▗▖ ▗▖ ▗▄▖ ▗▄▄▖ ▗▖  ▗▖▗▄▄▄▖▗▖  ▗▖ ▗▄▄▖
+ ▐▌ ▐▌▐▌ ▐▌▐▌ ▐▌▐▛▚▖▐▌  █  ▐▛▚▖▐▌▐▌   
+ ▐▌ ▐▌▐▛▀▜▌▐▛▀▚▖▐▌ ▝▜▌  █  ▐▌ ▝▜▌▐▌▝▜▌
+ ▐▙█▟▌▐▌ ▐▌▐▌ ▐▌▐▌  ▐▌▗▄█▄▖▐▌  ▐▌▝▚▄▞▘
+                                                                                
+You can now configure the firewall.
+Please not that the following configuration might break your access 
+to this server. Act very carefully and skip this step if you do not
+know what you are doing. 
+
+Default Configuration:
+* We will keep ports 22 (SSH) and 443 (https) open
+* All other ports will be closed
+
+Development Configuration (optional): 
+* Also port 3000 (http access for your solidus store) will be opened
+
+----------------------------------------------------------------------------------
+            If you use any other port than 22 for SSH access you won't reach
+            this system any more. Please assure that you have access to this
+WARNING     machine using traditional ports and that you didn move the SSH port.
+            You will receive a separate warnign during the configuration of 
+            of the Firewall that you can accept if you are running SSH on port 22.
+----------------------------------------------------------------------------------
+INFO        You might be asked for your password during this procedure. 
+----------------------------------------------------------------------------------
+EOF
+
+echo -e "This part is work in progress."
+
+# while true; do
+# read -p "Do you want to activate the firewall leaving ports 22 and 443 accessible? " yn
+# echo    # (optional) move to a new line
+# case $yn in 
+# 	[yY] )  echo -e "We will configure the firewall now."
+#          echo -e "You might be asked for your password during this procedure."
+#          sudo ufw allow OpenSSH
+#          sudo ufw allow Nginx HTTPS
+#          sudo ufw default deny incoming
+#          sudo ufw default allow outgoing
+#          sudo ufw enable
+#          echo -e "The Firewall is now active.";
+# 		break;;
+#	[nN] )  echo -e "The firewall will not be activated.";
+#		break;;
+# 	* ) echo "Your response was invalid, reply with \"y\" or \"n\".";;
+# esac
+# 
+# done
+
+echo -e "We have installed solidus."
