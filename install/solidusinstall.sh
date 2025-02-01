@@ -3,18 +3,21 @@
 # © Fabian V. Thobe for GMS 2025 If no license specified in parent repository, all rights reserved.
 # Script Configuration
 ## Variables
+### Versions and EOL dates
 solidusv=4.4.2
+soliduseol=2026-05-06
 rubyv=3.3.6
+rubyeol=2027-03-31
 railsv=7.2.2.1
+railseol=2026-08-9
 ubuntuv=24.04
-#
-## Description
-cat <<EOF 
+ubuntueol=2029-04-01
+cat <<EOF \
+
 ----------------------------------------------------------------------------------
 © 2025 Fabian Vincent Thobe for GMS
-If no license specified in parent repository, all rights reserved.
+If not specified in parent repository, all rights reserved.
 ----------------------------------------------------------------------------------
-
    █████                                                       
  ██████████      █████   █████  █      █  █████   █    █  █████
  ███    █        █      █     █ █      █  █    █  █    █  █    
@@ -22,17 +25,14 @@ If no license specified in parent repository, all rights reserved.
     █   ███          █  █     █ █      █  █    █  █    █      █ 
  ██████████      █████   █████  █████  █  █████   ██████  █████ 
    █████                                                                                                     
-
 ----------------------------------------------------------------------------------
-Installs the Solidus Ecommerce Application inside the following environment:
+Solidus Install Script for Stable Release with reverse proxy and SSL configuration
+----------------------------------------------------------------------------------
 Solidus $solidusv powered by Ruby $rubyv and Rails $railsv running on Ubuntu $ubuntuv
 ----------------------------------------------------------------------------------
 This script installs Solidus including Ruby and Ruby on Rails
 in the latest maintained version on your machine.
 No warranty, implied or not, is given in any way.
-
-Any steps that are optional have an individual prompt asking
-for your confirmation before proceeding. 
 
 Features: 
 
@@ -41,12 +41,18 @@ Features:
 * Install the DB (currently this script supports SQLite3)
 * Install nginx and configure as reverse proxy (optional)
 * Configure certificates with Cloudflare DNS and Let's Encrypt (optional)
-* Setup Firewall allowing only traffic from ports 22, 443 and 3000 (optional)
 
-Roadmap for future versions: 
+Solidus Configuration: 
 
-* Full Redis configuration
-* Best Practice Settings for Developer / Staging / Production 
+* New Solidus Promotions System
+* New Solidus Backend
+
+Security Lifetime of the Components:
+
+* Solidus $solidusv support ends on $soliduseol
+* Ruby $rubyv support ends on $rubyeol
+* Rails $railsv support ends on $railseol
+* Ubuntu $ubuntuv support ends on $ubuntueol
 
 ----------------------------------------------------------------------------------
 Information         You might be asked for your password during this procedure.
@@ -160,7 +166,7 @@ rbenv rehash
 
 # Asking user to enter FQDN of rails app
 echo "By now Ruby, Ruby on Rails and Redis are installed."
-echo "Enter the hostname of your application in the format \"server.mydomain.tld\"."
+echo "Enter the hostname of your application in the format \"hostname.example.com\"."
 echo "An application folder will be created and the server name will be used to create also your SSL certificates and configure nginx."
 read hostname
 
@@ -299,4 +305,73 @@ echo -e "This part is work in progress."
 # 
 # done
 
-echo -e "We have installed solidus."
+
+# Redis Installation Start
+cat <<EOF 
+----------------------------------------------------------------------------------
+
+Step 4: Redis Configuration (optional)
+
+----------------------------------------------------------------------------------
+                                                    
+We will now configure Redis. 
+Please not that the following configuration might break your access 
+to this server. Act very carefully and skip this step if you do not
+know what you are doing. 
+
+Default Configuration:
+* We will keep ports 22 (SSH) and 443 (https) open
+* All other ports will be closed
+
+Development Configuration (optional): 
+* Also port 3000 (http access for your solidus store) will be opened
+
+----------------------------------------------------------------------------------
+            If you use any other port than 22 for SSH access you won't reach
+            this system any more. Please assure that you have access to this
+WARNING     machine using traditional ports and that you didn move the SSH port.
+            You will receive a separate warnign during the configuration of 
+            of the Firewall that you can accept if you are running SSH on port 22.
+----------------------------------------------------------------------------------
+INFO        You might be asked for your password during this procedure. 
+----------------------------------------------------------------------------------
+EOF
+
+while true; do
+read -p "Do you want to install and configure Redis? " yn
+echo    # (optional) move to a new line
+case $yn in 
+ 	[yY] )  echo -e "We will configure Redis now."
+          echo -e "You might be asked for your password during this procedure."
+          sudo apt install redis-server
+          sudo bash -c 'echo -e "supervised systemd" >> /etc/redis/redis.conf'
+          sudo systemctl restart redis
+          cd ~/$hostname$
+          gem redis
+          gem sidekiq
+          gem bundle
+          echo -e "\n# Solidus Install Script Additions\ngem \"redis\"\ngem \"sidekiq\"" >> ~/$hostname/Gemfile
+          cat <<EOL > ~/$hostname/config/initializers/sidekiq.rb
+          Sidekiq.configure_server do |config|
+            config.redis = { url: ENV.fetch('REDIS_URL', 'redis://localhost:6379/1') }
+          end
+
+          Sidekiq.configure_client do |config|
+            config.redis = { url: ENV.fetch('REDIS_URL', 'redis://localhost:6379/1') }
+          end
+          EOL
+          echo -e "\n\n# Solidus Install Script Additions\nconfig.active_job.queue_adapter = :sidekiq" >> config/application.rb
+          echo -e "We have configured Redis.";
+ 		      break;;
+	[nN] )  echo -e "The installation of Redis has been skipped.";
+		      break;;
+ 	* )     echo "Your response was invalid, reply with \"y\" or \"n\".";;
+esac
+ 
+done
+
+
+# [WIP] Sidekiq configuration
+# echo -e "We have installed solidus."
+# sed -i '/class Application < Rails::Application/a\ \ \ \ config.active_job.queue_adapter = :sidekiq' config/application.rb
+# sed -i '/class Application < Rails::Application/,/end/ { /end/ i \    # Solidus Install Script Additions\n    config.active_job.queue_adapter = :sidekiq' }' config/application.rb
