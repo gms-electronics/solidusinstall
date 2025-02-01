@@ -1,0 +1,2 @@
+# MacOS Section
+.DS_Store
